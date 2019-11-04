@@ -26916,44 +26916,44 @@ var _interopRequireDefault = require("@babel/runtime/helpers/interopRequireDefau
 
 var _interopRequireWildcard = require("@babel/runtime/helpers/interopRequireWildcard");
 
-var asn1 = _interopRequireWildcard(require("asn1js"));
+var asn1js = _interopRequireWildcard(require("asn1js"));
 
 var _pvutils = require("pvutils");
 
-var _common = require("./helpers/common");
+var _common = require("./helpers/common.js");
 
-var _CertificationRequest = _interopRequireDefault(require("./CertificationRequest"));
+var _CertificationRequest = _interopRequireDefault(require("./CertificationRequest.js"));
 
-var _AttributeTypeAndValue = _interopRequireDefault(require("./helpers/AttributeTypeAndValue"));
+var _AttributeTypeAndValue = _interopRequireDefault(require("./helpers/AttributeTypeAndValue.js"));
 
-var _Attribute = _interopRequireDefault(require("./helpers/Attribute"));
+var _Attribute = _interopRequireDefault(require("./helpers/Attribute.js"));
 
-var _Extension = _interopRequireDefault(require("./helpers/Extension"));
+var _Extension = _interopRequireDefault(require("./helpers/Extension.js"));
 
-var _Extensions = _interopRequireDefault(require("./helpers/Extensions"));
+var _Extensions = _interopRequireDefault(require("./helpers/Extensions.js"));
 
-var _GeneralName = _interopRequireDefault(require("./helpers/GeneralName"));
+var _RSAPublicKey = _interopRequireDefault(require("./helpers/RSAPublicKey.js"));
 
-var _GeneralNames = _interopRequireDefault(require("./helpers/GeneralNames"));
+var _GeneralNames = _interopRequireDefault(require("./helpers/GeneralNames.js"));
 
-//import RSAPublicKey from "./helpers/RSAPublicKey";
-alert('hello'); //Initial values
+var _GeneralName = _interopRequireDefault(require("./helpers/GeneralName.js"));
 
-var pcks10Buffer = new ArrayBuffer(0);
-var hashAlgorithm = "SHA-1";
-var signAlgorithm = "RSASSA-PKCS1-V1_5"; //Auxiliary function
+/* eslint-disable no-undef,no-unreachable */
+var pkcs10Buffer = new ArrayBuffer(0);
+var hashAlg = "SHA-1";
+var signAlg = "RSASSA-PKCS1-V1_5"; //Auxiliary functions
 
 function formatPEM(pemString) {
   var stringLength = pemString.length;
   var resultString = "";
 
-  for (var index = 0, count = 0; index < stringLength; index++, count++) {
+  for (var i = 0, count = 0; i < stringLength; i++, count++) {
     if (count > 63) {
       resultString = "".concat(resultString, "\r\n");
       count = 0;
     }
 
-    resultString = "".concat(resultString).concat(pemString[index]);
+    resultString = "".concat(resultString).concat(pemString[i]);
   }
 
   return resultString;
@@ -26961,88 +26961,82 @@ function formatPEM(pemString) {
 
 
 function createPKCS10Internal() {
+  //Initial variables
   var sequence = Promise.resolve();
   var pkcs10 = new _CertificationRequest["default"]();
-  var privateKey;
-  var publicKey; //Get a crypto Extension
+  var publicKey;
+  var privateKey; //Get a "crypto" extension
 
   var crypto = (0, _common.getCrypto)();
-
-  if (typeof crypto === "undefined") {
-    return Promise.reject("No Webcrypto extension found");
-  } //Initialize values
-
+  if (typeof crypto === "undefined") return Promise.reject("No WebCrypto extension found"); //Put a static values
 
   pkcs10.version = 0;
   pkcs10.subject.typesAndValues.push(new _AttributeTypeAndValue["default"]({
     type: "2.5.4.6",
-    value: new asn1.PrintableString({
-      value: "UK"
+    value: new asn1js.PrintableString({
+      value: "RU"
     })
   }));
   pkcs10.subject.typesAndValues.push(new _AttributeTypeAndValue["default"]({
     type: "2.5.4.3",
-    value: new asn1.Utf8String({
-      value: "Simple Test"
+    value: new asn1js.Utf8String({
+      value: "Simple test (простой тест)"
     })
   }));
   var altNames = new _GeneralNames["default"]({
-    names: [//RFC822
-    new _GeneralName["default"]({
+    names: [new _GeneralName["default"]({
       type: 1,
+      // rfc822Name
       value: "email@address.com"
-    }), //DNS Name
-    new _GeneralName["default"]({
+    }), new _GeneralName["default"]({
       type: 2,
+      // dNSName
       value: "www.domain.com"
-    }), //Another DNS Name
-    new _GeneralName["default"]({
+    }), new _GeneralName["default"]({
       type: 2,
+      // dNSName
       value: "www.anotherdomain.com"
-    }), //IP Address
-    new _GeneralName["default"]({
+    }), new _GeneralName["default"]({
       type: 7,
-      value: new asn1.OctetString({
+      // iPAddress
+      value: new asn1js.OctetString({
         valueHex: new Uint8Array([0xC0, 0xA8, 0x00, 0x01]).buffer
       })
     })]
   });
-  pkcs10.attributes = []; //Creates the new Key pair
+  pkcs10.attributes = []; //Create a new key pair
 
   sequence = sequence.then(function () {
     //Get default algorithm parameters for key generation
-    var algorithm = (0, _common.getAlgorithmParameters)(signAlgorithm, "generateKey");
-
-    if ("hash" in algorithm.algorithm) {
-      algorithm.algorithm.hash.name = hashAlgorithm;
-    }
-
+    var algorithm = (0, _common.getAlgorithmParameters)(signAlg, "generatekey");
+    if ("hash" in algorithm.algorithm) algorithm.algorithm.hash.name = hashAlg;
     return crypto.generateKey(algorithm.algorithm, true, algorithm.usages);
-  }); //Store in temporary variable
+  }); //Store new key in an interim variables
 
   sequence = sequence.then(function (keyPair) {
     publicKey = keyPair.publicKey;
     privateKey = keyPair.privateKey;
   }, function (error) {
     return Promise.reject("Error during key generation: ".concat(error));
-  }); //Exports public key into subjectPublicKeyInfo value of PKCS#10
+  }); //Exporting public key into "subjectPublicKeyInfo" value of PKCS#10
 
   sequence = sequence.then(function () {
     return pkcs10.subjectPublicKeyInfo.importKey(publicKey);
-  }); //Identifies the SubjectKeyIdentifier
+  }); //SubjectKeyIdentifier
 
   sequence = sequence.then(function () {
     return crypto.digest({
       name: "SHA-1"
-    }, pcks10.subjectPublicKeyInfo.subjectPublicKey.valueBlock.valueHex);
+    }, pkcs10.subjectPublicKeyInfo.subjectPublicKey.valueBlock.valueHex);
   }).then(function (result) {
     pkcs10.attributes.push(new _Attribute["default"]({
       type: "1.2.840.113549.1.9.14",
+      // pkcs-9-at-extensionRequest
       values: [new _Extensions["default"]({
         extensions: [new _Extension["default"]({
           extnID: "2.5.29.14",
           critical: false,
-          extnValue: new asn1.OctetString({
+          extnValue: new asn1js.OctetString({
             valueHex: result
           }).toBER(false)
         }), new _Extension["default"]({
@@ -27052,21 +27046,21 @@ function createPKCS10Internal() {
         }), new _Extension["default"]({
           extnID: "1.2.840.113549.1.9.7",
           critical: false,
-          extnValue: new asn1.PrintableString({
-            valueHex: "passwordChallenge"
+          extnValue: new asn1js.PrintableString({
+            value: "passwordChallenge"
           }).toBER(false)
         })]
       }).toSchema()]
     }));
-  }); //Signs final PKCS#10 request
+  }); //Signing final PKCS#10 request
 
   sequence = sequence.then(function () {
-    return pkcs10.sign(privateKey, hashAlgorithm);
+    return pkcs10.sign(privateKey, hashAlg);
   }, function (error) {
     return Promise.reject("Error during exporting public key: ".concat(error));
   });
   return sequence.then(function () {
-    pcks10Buffer = pkcs10.toSchema().toBER(false);
+    pkcs10Buffer = pkcs10.toSchema().toBER(false);
   }, function (error) {
     return Promise.reject("Error signing PKCS#10: ".concat(error));
   });
@@ -27077,12 +27071,13 @@ function createPKCS10() {
   return Promise.resolve().then(function () {
     return createPKCS10Internal();
   }).then(function () {
-    var resultString = "----------BEGIN CERTIFICATE REQUEST----------\r\n";
-    resultString = "".concat(resultString).concat(formatPEM((0, _pvutils.toBase64)((0, _pvutils.arrayBufferToString)(pcks10Buffer))));
-    resultString = "".concat(resultString, "\r\n---------END CERTIFICATE REQUEST--------");
+    var resultString = "-----BEGIN CERTIFICATE REQUEST-----\r\n";
+    resultString = "".concat(resultString).concat(formatPEM((0, _pvutils.toBase64)((0, _pvutils.arrayBufferToString)(pkcs10Buffer))));
+    resultString = "".concat(resultString, "\r\n-----END CERTIFICATE REQUEST-----\r\n");
     document.getElementById("pem-text-block").value = resultString;
   });
-}
+} //Verify existing PKCS#10
+
 
 function verifyPKCS10Internal() {
   //region Decode existing PKCS#10
@@ -27096,7 +27091,7 @@ function verifyPKCS10Internal() {
 
 function verifyPKCS10() {
   return Promise.resolve().then(function () {
-    pcks10Buffer = (0, _pvutils.stringToArrayBuffer)((0, _pvutils.fromBase64)(document.getElementById("pem-text-block").value.replace(/(-----(BEGIN|END) CERTIFICATE REQUEST-----|\n)/g, "")));
+    pkcs10Buffer = (0, _pvutils.stringToArrayBuffer)((0, _pvutils.fromBase64)(document.getElementById("pem-text-block").value.replace(/(-----(BEGIN|END) CERTIFICATE REQUEST-----|\n)/g, "")));
   }).then(function () {
     return verifyPKCS10Internal();
   }).then(function (result) {
@@ -27111,19 +27106,19 @@ function handleHashAlgOnChange() {
 
   switch (hashOption) {
     case "alg_SHA1":
-      hashAlgorithm = "sha-1";
+      hashAlg = "sha-1";
       break;
 
     case "alg_SHA256":
-      hashAlgorithm = "sha-256";
+      hashAlg = "sha-256";
       break;
 
     case "alg_SHA384":
-      hashAlgorithm = "sha-384";
+      hashAlg = "sha-384";
       break;
 
     case "alg_SHA512":
-      hashAlgorithm = "sha-512";
+      hashAlg = "sha-512";
       break;
 
     default:
@@ -27135,82 +27130,24 @@ function handleSignAlgOnChange() {
 
   switch (signOption) {
     case "alg_RSA15":
-      signAlgorithm = "RSASSA-PKCS1-V1_5";
+      signAlg = "RSASSA-PKCS1-V1_5";
       break;
 
     case "alg_RSA2":
-      signAlgorithm = "RSA-PSS";
+      signAlg = "RSA-PSS";
       break;
 
     case "alg_ECDSA":
-      signAlgorithm = "ECDSA";
+      signAlg = "ECDSA";
       break;
 
     default:
   }
 }
 
-window.createPKCS10 = createPKCS10; //window.parsePKCS10 = parsePKCS10;
-
+window.createPKCS10 = createPKCS10;
 window.verifyPKCS10 = verifyPKCS10;
 window.handleHashAlgOnChange = handleHashAlgOnChange;
 window.handleSignAlgOnChange = handleSignAlgOnChange;
-/*context("Hack for Rollup.js", () => {
-    return;
 
-    // noinspection UnreachableCodeJS
-    createPKCS10();
-    //parsePKCS10();
-    verifyPKCS10();
-    handleHashAlgOnChange();
-    handleSignAlgOnChange();
-    setEngine();
-});*/
-
-/*
-context("PKCS#10 Complex Example", () => {
-    //region Initial variables
-    const hashAlgorithms = ["SHA-1", "SHA-256", "SHA-384", "SHA-512"];
-    const signAlgorithms = ["RSASSA-PKCS1-V1_5", "ECDSA", "RSA-PSS"];
-
-    const algorithmsMap = new Map([
-                                      ["SHA-1 + RSASSA-PKCS1-V1_5", "1.2.840.113549.1.1.5"],
-                                      ["SHA-256 + RSASSA-PKCS1-V1_5", "1.2.840.113549.1.1.11"],
-                                      ["SHA-384 + RSASSA-PKCS1-V1_5", "1.2.840.113549.1.1.12"],
-                                      ["SHA-512 + RSASSA-PKCS1-V1_5", "1.2.840.113549.1.1.13"],
-
-                                      ["SHA-1 + ECDSA", "1.2.840.10045.4.1"],
-                                      ["SHA-256 + ECDSA", "1.2.840.10045.4.3.2"],
-                                      ["SHA-384 + ECDSA", "1.2.840.10045.4.3.3"],
-                                      ["SHA-512 + ECDSA", "1.2.840.10045.4.3.4"],
-
-                                      ["SHA-1 + RSA-PSS", "1.2.840.113549.1.1.10"],
-                                      ["SHA-256 + RSA-PSS", "1.2.840.113549.1.1.10"],
-                                      ["SHA-384 + RSA-PSS", "1.2.840.113549.1.1.10"],
-                                      ["SHA-512 + RSA-PSS", "1.2.840.113549.1.1.10"]
-                                  ]);
-
-    signAlgorithms.forEach(_signAlg => {
-        hashAlgorithms.forEach(_hashAlg => {
-            const testName = `${_hashAlg} + ${_signAlg}`;
-
-            it(testName, () => {
-                hashAlgorithm = _hashAlg;
-                signAlgorithm = _signAlg;
-
-                return createPKCS10Internal().then(() => {
-                    const asn1 = asn1js.fromBER(pkcs10Buffer);
-                    const pkcs10 = new CertificationRequest({ schema: asn1.result });
-
-                    assert.equal(pkcs10.signatureAlgorithm.algorithmId, algorithmsMap.get(testName), `Signature algorithm must be ${testName}`);
-
-                    return verifyPKCS10Internal().then(result => {
-                        assert.equal(result, true, "PKCS#10 must be verified successfully");
-                    });
-                });
-            });
-        });
-    });
-});*/
-
-},{"./CertificationRequest":22,"./helpers/Attribute":26,"./helpers/AttributeTypeAndValue":27,"./helpers/Extension":40,"./helpers/Extensions":41,"./helpers/GeneralName":42,"./helpers/GeneralNames":43,"./helpers/common":66,"@babel/runtime/helpers/interopRequireDefault":6,"@babel/runtime/helpers/interopRequireWildcard":7,"asn1js":16,"pvutils":20}]},{},[67]);
+},{"./CertificationRequest.js":22,"./helpers/Attribute.js":26,"./helpers/AttributeTypeAndValue.js":27,"./helpers/Extension.js":40,"./helpers/Extensions.js":41,"./helpers/GeneralName.js":42,"./helpers/GeneralNames.js":43,"./helpers/RSAPublicKey.js":61,"./helpers/common.js":66,"@babel/runtime/helpers/interopRequireDefault":6,"@babel/runtime/helpers/interopRequireWildcard":7,"asn1js":16,"pvutils":20}]},{},[67]);
