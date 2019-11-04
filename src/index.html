@@ -28,8 +28,8 @@
         </p>
         <label for="pem-text-block" style="font-weight:bold">Paste in PKCS#10:</label>
         <textarea id="pem-text-block"></textarea>
-        <a onclick="createPKCS10()">Create</a>
-        <a onclick="verifyPKCS10()">Verify</a>
+        <button id="create" onclick="createPKCS10()">Create</button>
+        <button id="verify" onclick="verifyPKCS10()">Verify</button>
     </div>
     <div id="pkcs10-data-block" style="display:none;">
         <h2 id="pkcs10-subject-cn"></h2>

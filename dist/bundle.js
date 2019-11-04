@@ -27149,6 +27149,12 @@ function handleSignAlgOnChange() {
     default:
   }
 }
+
+window.createPKCS10 = createPKCS10; //window.parsePKCS10 = parsePKCS10;
+
+window.verifyPKCS10 = verifyPKCS10;
+window.handleHashAlgOnChange = handleHashAlgOnChange;
+window.handleSignAlgOnChange = handleSignAlgOnChange;
 /*context("Hack for Rollup.js", () => {
     return;
 
